@@ -5,14 +5,17 @@ import argparse
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn import Parameter
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 
+import rbf
+
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                    help='input batch size for training (default: 64)')
+parser.add_argument('--batch-size', type=int, default=32, metavar='N',
+                    help='input batch size for training (default: 32)')
 parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='input batch size for testing (default: 1000)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
@@ -59,8 +62,15 @@ class Net(nn.Module):
         self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
+        self.query_points = Parameter(torch.rand(28 * 28, 2)* 28, requires_grad=True)
 
     def forward(self, x):
+        points = mnist_field_coords
+        weights = rbf.mono_img_batch_to_weights(x)
+        batch_size = x.size(0)
+        rr = rbf.torch_rbf(self.query_points.unsqueeze(0).expand(batch_size, 28 * 28, 2),
+                      points.unsqueeze(0).expand(batch_size, 28*28, 2), weights)
+        x = rr.view(batch_size, 1, 28, 28)
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         x = x.view(-1, 320)
@@ -97,7 +107,10 @@ def permute_image_test():
     return permute_image(data, perm, batch_size)
 
 
-perm = torch.randperm(28*28)
+height = 28
+width = 28
+perm = torch.randperm(height * width)
+mnist_field_coords = Variable(rbf.tensor_to_field_coords(height, width), requires_grad=False)
 
 def train(epoch):
     model.train()
