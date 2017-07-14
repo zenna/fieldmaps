@@ -50,7 +50,7 @@ def main(epochs=1000, log_interval=10):
 
     # Minimize
     train_loader = mnist_batch(batch_size)
-
+    step = 0
     for epoch in range(1, epochs + 1):
         for batch_idx, (data, target) in enumerate(train_loader):
             if cuda:
@@ -83,6 +83,7 @@ def main(epochs=1000, log_interval=10):
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), loss.data[0]))
 
+            step += 1
 
 if __name__ == "__main__":
     main()
