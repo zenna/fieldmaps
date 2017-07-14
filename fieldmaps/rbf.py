@@ -57,6 +57,8 @@ def mono_img_batch_to_weights(img_batch):
         raise ValueError
     batch_size, nchannels, h, w = img_batch.size()
     field_batch = torch.zeros(batch_size, h*w)
+    if img_batch.is_cuda:
+        field_batch = field_batch.cuda()
     for i in range(batch_size):
         a = tensor_to_field_weights(img_batch[0,0,:,:])
         field_batch[i] = a
@@ -68,7 +70,6 @@ def mono_img_batch_to_weights(img_batch):
 def torch_rbf(input, points, weights):
     radialf = gaussian
     dist = batch_euclid
-
     # Check batch size consistent
     if not(points.size(0) == weights.size(0) == input.size(0)):
         raise ValueError
@@ -86,6 +87,8 @@ def torch_rbf(input, points, weights):
 
     # final_dists = torch.zeros(batch_size, nquery_points)
     final_dists = Variable(torch.zeros(batch_size, nquery_points))
+    if input.is_cuda:
+        final_dists = final_dists.cuda()
 
     for i in range(npoints):
         point_slice = points[:, i:i+1, :].expand_as(input)

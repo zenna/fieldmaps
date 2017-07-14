@@ -22,6 +22,9 @@ def main(epochs=1000, log_interval=10):
     batch_size = 16
     height = 28
     width = 28
+    cuda = True and torch.cuda.is_available()
+    print("Using CUDA?", cuda)
+
     if draw:
         plt.figure()
         field_viz = plt.imshow(np.random.rand(height, width))
@@ -35,16 +38,23 @@ def main(epochs=1000, log_interval=10):
                                   requires_grad=False)
 
     query_points = torch.rand(height * width, 2) * 28
+    if cuda:
+        query_points = query_points.cuda()
     grid_points = rbf.tensor_to_field_coords(height, width)
+    if cuda:
+        grid_points = grid_points.cuda()
     grid_points = Variable(grid_points)
     query_points = Variable(query_points, requires_grad=True)
     optimizer = optim.SGD([query_points], lr=1, momentum=0.1)
+
 
     # Minimize
     train_loader = mnist_batch(batch_size)
 
     for epoch in range(1, epochs + 1):
         for batch_idx, (data, target) in enumerate(train_loader):
+            if cuda:
+                data, target = data.cuda(), target.cuda()
             weights = Variable(rbf.mono_img_batch_to_weights(data))
             data, target = Variable(data), Variable(target)
             optimizer.zero_grad()
