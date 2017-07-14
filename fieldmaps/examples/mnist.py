@@ -9,8 +9,18 @@ from torch.nn import Parameter
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
+import matplotlib.pyplot as plt
+import numpy as np
+plt.ion()
 
 import rbf
+
+# Globals for vizualisation
+plt.figure()
+field_viz = plt.imshow(np.random.rand(28, 28))
+plt.figure()
+rbf_viz = plt.imshow(np.random.rand(28, 28))
+
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
@@ -53,7 +63,6 @@ test_loader = torch.utils.data.DataLoader(
                    ])),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
-
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -62,15 +71,22 @@ class Net(nn.Module):
         self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(320, 50)
         self.fc2 = nn.Linear(50, 10)
-        self.query_points = Parameter(torch.rand(28 * 28, 2)* 28, requires_grad=True)
+        # query_points = rbf.tensor_to_field_coords(28, 28, True)
+        query_points = torch.rand(28 * 28, 2)* 28
+        self.query_points = Parameter(query_points, requires_grad=True)
 
     def forward(self, x):
+        field_viz.set_data(x[0,0,:,:].data.numpy())
         points = mnist_field_coords
-        weights = rbf.mono_img_batch_to_weights(x)
+        weights = Variable(rbf.mono_img_batch_to_weights(x.data))
         batch_size = x.size(0)
+        print("QUERY POINTS SUM", torch.sum(self.query_points))
         rr = rbf.torch_rbf(self.query_points.unsqueeze(0).expand(batch_size, 28 * 28, 2),
                       points.unsqueeze(0).expand(batch_size, 28*28, 2), weights)
         x = rr.view(batch_size, 1, 28, 28)
+        rbf_viz.set_data(x[0,0,:,:].data.numpy())
+        plt.draw()
+        plt.pause(0.001)
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         x = x.view(-1, 320)
@@ -112,6 +128,7 @@ width = 28
 perm = torch.randperm(height * width)
 mnist_field_coords = Variable(rbf.tensor_to_field_coords(height, width), requires_grad=False)
 
+
 def train(epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -123,7 +140,7 @@ def train(epoch):
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
-        loss.backward()
+        gradients = loss.backward()
         optimizer.step()
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -150,6 +167,10 @@ def test():
         100. * correct / len(test_loader.dataset)))
 
 
-for epoch in range(1, args.epochs + 1):
-    train(epoch)
-    test()
+def main():
+    for epoch in range(1, args.epochs + 1):
+        train(epoch)
+        test()
+
+if __name__ == "__main__":
+    main()

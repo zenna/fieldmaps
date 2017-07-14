@@ -3,7 +3,7 @@ import torch
 from torch.autograd import Function, Variable, gradcheck
 import numpy as np
 
-def gaussian(r, eta=1.0):
+def gaussian(r, eta=0.5):
     "Gaussian radial basis function"
     p = (eta*r)
     pp = p * p
@@ -84,8 +84,8 @@ def torch_rbf(input, points, weights):
     nquery_points = input.size(1)
     ndim = input.size(2)
 
-    final_dists = torch.zeros(batch_size, nquery_points)
-    # final_dists = Variable(torch.zeros(batch_size, nquery_points))
+    # final_dists = torch.zeros(batch_size, nquery_points)
+    final_dists = Variable(torch.zeros(batch_size, nquery_points))
 
     for i in range(npoints):
         point_slice = points[:, i:i+1, :].expand_as(input)

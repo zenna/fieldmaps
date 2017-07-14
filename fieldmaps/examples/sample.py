@@ -65,4 +65,5 @@ def main(niters=100000):
 
     # plot the query points
 
-main()
+if __name__ == "__main__":
+    main()
