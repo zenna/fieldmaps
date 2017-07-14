@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 plt.ion()
 
+from fieldmaps.util.logger import Logger
 import rbf
 
 # Globals for vizualisation

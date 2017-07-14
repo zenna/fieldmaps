@@ -9,12 +9,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sample import mnist_batch
 import rbf
+from fieldmaps.util.logger import Logger
+
 
 draw = False
 if draw:
     plt.ion()
 
 def main(epochs=1000, log_interval=10):
+    logger = Logger('./logs')
     # Setup
     batch_size = 16
     height = 28
@@ -55,6 +58,7 @@ def main(epochs=1000, log_interval=10):
             img_distance = transformed_img - data
             loss = torch.mean(torch.sqrt(img_distance*img_distance))
             print("Loss is", loss.data[0])
+            logger.scalar_summary('loss', loss.data[0], step+1)
             loss.backward()
             optimizer.step()
 
