@@ -58,9 +58,9 @@ def main(epochs=1000, log_interval=10):
             loss.backward()
             optimizer.step()
 
-            field_viz.set_data(data[0,0,:,:].data.numpy())
-            rbf_viz.set_data(transformed_img[0,:,:].data.numpy())
             if draw:
+                field_viz.set_data(data[0,0,:,:].data.numpy())
+                rbf_viz.set_data(transformed_img[0,:,:].data.numpy())
                 plt.draw()
                 plt.pause(0.0001)
 
